@@ -15,6 +15,23 @@ struct Vertex {
     Vector4uc color;
 };
 
+inline unsigned int getIdx(unsigned int w, unsigned int h) {
+    return w + h * 640; //hardcode width
+}
+
+inline unsigned int getW(unsigned int idx) {
+    return idx % 640; //hardcode width
+}
+
+inline unsigned int getH(unsigned int idx) {
+    return idx / 640; //hardcode width
+}
+
+float dist(Vertex &a, Vertex &b) {
+    Eigen::Vector4f dist = a.position - b.position;
+    return dist.norm();
+}
+
 bool WriteMesh(Vertex *vertices, unsigned int width, unsigned int height, const std::string &filename) {
     float edgeThreshold = 0.01f; // 1cm
 
@@ -27,12 +44,48 @@ bool WriteMesh(Vertex *vertices, unsigned int width, unsigned int height, const 
     // - only write triangles with valid vertices and an edge length smaller then edgeThreshold
 
     // TODO: Get number of vertices
-    unsigned int nVertices = 0;
-
+    unsigned int nVertices = width * height;
 
 
     // TODO: Determine number of valid faces
     unsigned nFaces = 0;
+
+    // TODO: save valid faces
+//    smaller then edgeThreshold
+    std::stringstream oss;
+    int resolution = 1;
+
+    for (int h = 0; h < height - resolution; h += resolution) {
+        for (int w = 0; w < width - resolution; w += resolution) {
+            unsigned int i = getIdx(w, h);
+            unsigned int j = getIdx(w + resolution, h);
+            unsigned int k = getIdx(w, h + resolution);
+            unsigned int l = getIdx(w + resolution, h + resolution);
+
+            // side short enough
+            bool ij = dist(vertices[i], vertices[j]) < edgeThreshold;
+            bool jk = dist(vertices[j], vertices[k]) < edgeThreshold;
+            bool ki = dist(vertices[k], vertices[i]) < edgeThreshold;
+            bool jl = dist(vertices[j], vertices[l]) < edgeThreshold;
+            bool lk = dist(vertices[l], vertices[k]) < edgeThreshold;
+
+            // verts in both triangles
+            if (vertices[j].position.x() == MINF || vertices[k].position.x() == MINF || !jk) {
+                continue;
+            }
+
+            // counter-clockwise orientation
+            if (vertices[i].position.x() != MINF && ij && ki) {
+                nFaces++;
+                oss << "3 " << i << " " << k << " " << j << std::endl;
+            }
+            if (vertices[l].position.x() != MINF && jl && lk) {
+                nFaces++;
+                oss << "3 " << k << " " << l << " " << j << std::endl;
+            }
+        }
+    }
+
 
     // Write off file
     std::ofstream outFile(filename);
@@ -42,10 +95,30 @@ bool WriteMesh(Vertex *vertices, unsigned int width, unsigned int height, const 
     outFile << "COFF" << std::endl;
     outFile << nVertices << " " << nFaces << " 0" << std::endl;
 
-    // TODO: save vertices
+    // save vertices
+    for (int i = 0; i < nVertices; ++i) {
+        auto vert = vertices[i];
+        auto pos = vert.position;
 
+        unsigned int r = vert.color[0];
+        unsigned int g = vert.color[1];
+        unsigned int b = vert.color[2];
+        unsigned int w = vert.color[3];
 
-    // TODO: save valid faces
+        float x = pos.x();
+        float y = pos.y();
+        float z = pos.z();
+
+        if (x == MINF) {
+            x = 0;
+            y = 0;
+            z = 0;
+        }
+
+        outFile << x << " " << y << " " << z << " " << r << " " << g << " " << b << " " << w << " " << std::endl;
+    }
+
+    outFile << oss.str();
 
 
     // close file
@@ -56,7 +129,7 @@ bool WriteMesh(Vertex *vertices, unsigned int width, unsigned int height, const 
 
 int main() {
     // Make sure this path points to the data folder
-    std::string filenameIn = "../../data/rgbd_dataset_freiburg1_xyz/";
+    std::string filenameIn = "../data/rgbd_dataset_freiburg1_xyz/";
     std::string filenameBaseOut = "mesh_";
 
     // load video
@@ -93,7 +166,7 @@ int main() {
         Matrix4f trajectory = sensor.GetTrajectory();
         Matrix4f trajectoryInv = sensor.GetTrajectory().inverse();
 
-        // TODO 1: back-projection
+        // back-projection
         // write result to the vertices array below, keep pixel ordering!
         // if the depth value at idx is invalid (MINF) write the following values to the vertices array
         // vertices[idx].position = Vector4f(MINF, MINF, MINF, MINF);
@@ -106,23 +179,19 @@ int main() {
                 0, fY, cY,
                 0, 0, 1;
 
-        std::cout << intrinsic << std::endl;
-        std::cout << "-----------------------" << std::endl;
+//        std::cout << intrinsic << std::endl;
+//        std::cout << "-----------------------" << std::endl;
 
         auto &depthIntrinsicInv = intrinsic.inverse();
-        std::cout << depthIntrinsicInv << std::endl;
-
-        std::cout << "-----------------------" << std::endl;
-
-        std::cout << sensor.GetDepthExtrinsics() << std::endl;
-
-        std::cout << "-----------------------" << std::endl;
-
-        std::cout << depthExtrinsicsInv << std::endl;
+//        std::cout << depthIntrinsicInv << std::endl;
+//        std::cout << "-----------------------" << std::endl;
+//        std::cout << sensor.GetDepthExtrinsics() << std::endl;
+//        std::cout << "-----------------------" << std::endl;
+//        std::cout << depthExtrinsicsInv << std::endl;
 
 
-        for (int i = 0; i < width; ++i) {
-            for (int j = 0; j < height; ++j) {
+        for (int j = 0; j < height; ++j) {
+            for (int i = 0; i < width; ++i) {
                 unsigned int idx = i + width * j;
 
                 auto depth = depthMap[idx];
@@ -157,7 +226,7 @@ int main() {
 
 
                 vertices[idx].position = worldPoint;
-                vertices[idx].color = Vector4uc(red, green, blue, 0);
+                vertices[idx].color = Vector4uc(red, green, blue, x);
 
             }
         }
