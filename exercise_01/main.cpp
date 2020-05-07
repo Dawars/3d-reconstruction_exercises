@@ -174,25 +174,12 @@ int main() {
         // otherwise apply back-projection and transform the vertex to world space, use the corresponding color from the colormap
         Vertex *vertices = new Vertex[sensor.GetDepthImageWidth() * sensor.GetDepthImageHeight()];
 
-        Eigen::Matrix3f intrinsic; // camera space to image coordinates (pixels)
-        intrinsic << fX, 0, cX,
-                0, fY, cY,
-                0, 0, 1;
-
-//        std::cout << intrinsic << std::endl;
-//        std::cout << "-----------------------" << std::endl;
-
-        auto &depthIntrinsicInv = intrinsic.inverse();
-//        std::cout << depthIntrinsicInv << std::endl;
-//        std::cout << "-----------------------" << std::endl;
-//        std::cout << sensor.GetDepthExtrinsics() << std::endl;
-//        std::cout << "-----------------------" << std::endl;
-//        std::cout << depthExtrinsicsInv << std::endl;
+        auto &depthIntrinsicInv = depthIntrinsics.inverse();
 
 
         for (int j = 0; j < height; ++j) {
             for (int i = 0; i < width; ++i) {
-                unsigned int idx = i + width * j;
+                unsigned int idx = getIdx(i, j);
 
                 auto depth = depthMap[idx];
 
@@ -215,7 +202,7 @@ int main() {
                 cameraPoint << depth * cameraLine, 1; // extend
 
                 //          [4,1]       [4,4]           [4,1]
-                auto worldPoint = depthExtrinsicsInv * cameraPoint;
+                auto worldPoint = trajectoryInv * depthExtrinsicsInv * cameraPoint;
 
                 // color
                 auto colorIdx = idx * 4;
