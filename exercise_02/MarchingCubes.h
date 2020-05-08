@@ -337,12 +337,18 @@ Vector3d VertexInterp(double isolevel, const Vector3d& p1, const Vector3d& p2, d
 	//      /
 	//     x f(p) = isolevel
 	//    /
-	//   /
-	//  /
-	// x
-	// f(p1) = valp1
+    //   x f(p) = isolevel                              0
+	//  /          r1
+	// x--------------                                 +1
+	// f(p1) = valp1  = +1
 
-	return (p1+p2)/2; // replace me
+
+    double diff = abs(valp1)+abs(valp2);
+
+    double r1 = abs(valp2)/diff;
+    double r2 = abs(valp1)/diff;
+
+	return r1 * p1 + r2 * p2; // replace me
 }
 
 /*
