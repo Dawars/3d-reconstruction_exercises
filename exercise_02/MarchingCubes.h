@@ -332,10 +332,10 @@ Vector3d VertexInterp(double isolevel, const Vector3d& p1, const Vector3d& p2, d
 	// Further assume that the function is linear between 'p1' and 'p2'. Compute and return the
 	// point 'p' on the line from 'p1' to 'p2' where the function takes on the value 'isolevel'
 	//
-	//       f(p2) = valp2
-	//       x
+	//       f(p2) = valp2 = -2
+	//       x-----------                              -2
 	//      /
-	//     x f(p) = isolevel
+	//     /       r2                                  -1
 	//    /
     //   x f(p) = isolevel                              0
 	//  /          r1
