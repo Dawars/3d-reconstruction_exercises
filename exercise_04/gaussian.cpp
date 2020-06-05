@@ -15,8 +15,16 @@ struct GaussianCostFunction
 	template<typename T>
 	bool operator()(const T* const mu, const T* const sigma, T* residual) const
 	{
-		// TODO: Implement the cost function
-		residual[0] = T(0.0);
+	    const T x = T(point.x);
+        const T y = T(point.y);
+        const T PI = T(M_PI);
+
+        const T s = *sigma;
+        const T m = *mu;
+
+		// Implement the cost function
+        residual[0] = point.y - ( T(1.) / ceres::sqrt(T(2) * T(M_PI) * ceres::pow(*sigma, 2)) *
+                ceres::exp(- T(1.) / (T(2.)* ceres::pow(*sigma, 2)) * ceres::pow(point.x - *mu, 2)));
 
 		return true;
 	}
