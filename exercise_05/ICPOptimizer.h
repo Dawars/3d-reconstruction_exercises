@@ -110,9 +110,12 @@ public:
 		// increment (pose parameters) to the source point, you can use the PoseIncrement class.
 		// Important: Ceres automatically squares the cost function.
 
-		residuals[0] = T(0);
-		residuals[1] = T(0);
-		residuals[2] = T(0);
+		Vector3f transformedPoint;
+//		std::cout << *pose << std::endl;
+//      PoseIncrement<T> poseIncrement(pose); // todo cast param somhow?
+//		poseIncrement.apply(m_sourcePoint, transformedPoint);
+
+		fillVector(m_weight*(transformedPoint - m_sourcePoint), residuals);
 
 		return true;
 	}
@@ -326,7 +329,11 @@ private:
 
 				// TODO: Create a new point-to-point cost function and add it as constraint (i.e. residual block) 
 				// to the Ceres problem.
-
+                problem.AddResidualBlock(
+                        PointToPointConstraint::create(sourcePoint, targetPoint, 1),
+				        nullptr,
+				        poseIncrement.getData()
+				);
 
 				if (m_bUsePointToPlaneConstraints) {
 					const auto& targetNormal = targetNormals[match.idx];
