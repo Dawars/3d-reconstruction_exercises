@@ -81,8 +81,12 @@ public:
 					continue;
 				}
 
-				// TODO: Compute the normals using central differences. 
-				normalsTmp[idx] = Vector3f(1, 1, 1); // Needs to be replaced.
+				// TODO: Compute the normals using central differences.
+
+                auto p1 = pointsTmp[v*width + u+1] - pointsTmp[v*width + u-1];
+                auto p2 = pointsTmp[(v-1)*width + u] - pointsTmp[(v+1)*width + u];
+
+				normalsTmp[idx] = p1.cross(p2); // Needs to be replaced.
 				normalsTmp[idx].normalize();
 			}
 		}

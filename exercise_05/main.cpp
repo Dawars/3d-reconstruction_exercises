@@ -9,7 +9,7 @@
 
 #define SHOW_BUNNY_CORRESPONDENCES 0
 
-#define USE_POINT_TO_PLANE	0
+#define USE_POINT_TO_PLANE	1
 #define USE_LINEAR_ICP		0
 
 #define RUN_SHAPE_ICP		1
@@ -109,7 +109,7 @@ int alignBunnyWithICP() {
 			resultingMesh = SimpleMesh::joinMeshes(SimpleMesh::sphere(targetPoint, 0.001f, Vector4uc(255, 255, 255, 255)), resultingMesh, Matrix4f::Identity());
 		}
 	}
-	resultingMesh.writeMesh(std::string("../output/bunny_icp.off"));
+	resultingMesh.writeMesh(std::string("../output/bunny_icp_plane.off"));
 	std::cout << "Resulting mesh written." << std::endl;
 
 	delete optimizer;
